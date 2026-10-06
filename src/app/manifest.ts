@@ -1,0 +1,26 @@
+import type { MetadataRoute } from "next"
+
+// Lets phones install the site as an app ("Add to Home Screen").
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: "NAC UCC Campus Congregation",
+    short_name: "NAC UCC",
+    description: "New Apostolic Church — University of Cape Coast Campus Congregation",
+    start_url: "/",
+    display: "standalone",
+    background_color: "#0A0F1E",
+    theme_color: "#1E3A8A",
+    orientation: "portrait-primary",
+    icons: [
+      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { src: "/icons/icon.svg", sizes: "any", type: "image/svg+xml" },
+    ],
+    categories: ["religion", "lifestyle"],
+    shortcuts: [
+      { name: "Events", url: "/events" },
+      { name: "Sermons", url: "/sermons" },
+      { name: "Give", url: "/give" },
+    ],
+  }
+}

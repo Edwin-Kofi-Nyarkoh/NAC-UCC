@@ -1,0 +1,262 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Users & Auth ──────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  CHURCH_EDITOR
+  MEDICAL_MINISTER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // bcrypt-hashed — never plain text
+  name      String
+  role      Role
+  verified  Boolean  @default(false)  // admin must verify before user can log in
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts        Post[]
+  medicalPosts MedicalPost[]
+  events       Event[]
+  sermons      Sermon[]
+
+  @@map("users")
+}
+
+// ─── Church Content ────────────────────────────────────────────────────────
+
+enum PostCategory {
+  NEWS
+  ANNOUNCEMENT
+  TESTIMONY
+  DEVOTIONAL
+  GENERAL
+}
+
+model Post {
+  id            String      @id @default(cuid())
+  title         String
+  slug          String      @unique
+  content       String      @db.Text
+  excerpt       String?
+  imagePublicId String?     // Cloudinary public ID (first/featured)
+  mediaItems    Json?       // [{type:"image"|"video", publicId:string}] max 3
+  published     Boolean     @default(false)
+  category      PostCategory @default(NEWS)
+  author        User        @relation(fields: [authorId], references: [id])
+  authorId      String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("posts")
+}
+
+model Event {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  date          DateTime
+  endDate       DateTime?
+  time          String
+  location      String
+  description   String   @db.Text
+  imagePublicId String?
+  category      String   @default("service")
+  published     Boolean  @default(true)
+  author        User     @relation(fields: [authorId], references: [id])
+  authorId      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("events")
+}
+
+model Sermon {
+  id            String           @id @default(cuid())
+  title         String
+  slug          String           @unique
+  preacher      String
+  date          DateTime
+  scripture     String
+  description   String           @db.Text
+  audioPublicId String?
+  videoPublicId String?
+  imagePublicId String?
+  duration      String?
+  published     Boolean          @default(true)
+  author        User             @relation(fields: [authorId], references: [id])
+  authorId      String
+  comments      SermonComment[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@map("sermons")
+}
+
+model SermonComment {
+  id          String   @id @default(cuid())
+  content     String   @db.Text
+  authorName  String
+  authorEmail String?
+  approved    Boolean  @default(false)
+  sermon      Sermon   @relation(fields: [sermonId], references: [id], onDelete: Cascade)
+  sermonId    String
+  createdAt   DateTime @default(now())
+
+  @@map("sermon_comments")
+}
+
+// ─── Medical Content ───────────────────────────────────────────────────────
+
+enum MedicalCategory {
+  HEALTH_TIP
+  UPDATE
+  NEWS
+  SCREENING
+  EMERGENCY
+  GENERAL
+}
+
+model MedicalPost {
+  id            String          @id @default(cuid())
+  title         String
+  slug          String          @unique
+  content       String          @db.Text
+  excerpt       String?
+  imagePublicId String?
+  mediaItems    Json?           // [{type:"image"|"video", publicId:string}] max 3
+  published     Boolean         @default(false)
+  category      MedicalCategory @default(GENERAL)
+  author        User            @relation(fields: [authorId], references: [id])
+  authorId      String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("medical_posts")
+}
+
+// ─── Site Settings (key → JSON value store) ─────────────────────────────────
+
+model SiteSetting {
+  key       String   @id   // a section name from src/lib/site-settings.ts, e.g. "bank"
+  value     String   @db.Text  // JSON string
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+// ─── Contact Messages ───────────────────────────────────────────────────────
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("contact_messages")
+}
+
+// ─── Nominations ─────────────────────────────────────────────────────────────
+
+model NominationPosition {
+  id          String       @id @default(cuid())
+  title       String       // "President", "Vice President", etc.
+  description String?
+  active      Boolean      @default(true)
+  order       Int          @default(0)
+  nominations Nomination[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("nomination_positions")
+}
+
+model Nomination {
+  id            String             @id @default(cuid())
+  // The person being nominated
+  nomineeName   String
+  nomineeInfo   String?            // Optional: department, year level, etc.
+  // The person doing the nominating (for deduplication)
+  nominatorName String
+  nominatorId   String             // Student ID / index number
+  position      NominationPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  positionId    String
+  createdAt     DateTime           @default(now())
+
+  @@unique([positionId, nominatorId]) // One nomination per position per member
+  @@map("nominations")
+}
+
+// ─── Site content managed from the admin dashboard ──────────────────────────
+
+model HeroSlide {
+  id        String   @id @default(cuid())
+  type      String   @default("image")  // "image" | "video"
+  publicId  String                      // Cloudinary public ID
+  title     String
+  subtitle  String?
+  ctaLabel  String?                     // button text, e.g. "Join Us This Sunday"
+  ctaHref   String?                     // where the button goes, e.g. "/events"
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("hero_slides")
+}
+
+model Leader {
+  id            String   @id @default(cuid())
+  name          String
+  title         String                  // role in the congregation
+  bio           String?  @db.Text
+  imagePublicId String?
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("leaders")
+}
+
+model Ministry {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  description   String   @db.Text
+  leader        String?
+  meetingDay    String?
+  meetingTime   String?
+  imagePublicId String?
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("ministries")
+}
+
+model GalleryItem {
+  id        String   @id @default(cuid())
+  type      String   @default("image")  // "image" | "video"
+  publicId  String
+  caption   String?
+  category  String?
+  width     Int                         // original dimensions, used to lay out the grid
+  height    Int
+  createdAt DateTime @default(now())
+
+  @@map("gallery_items")
+}
