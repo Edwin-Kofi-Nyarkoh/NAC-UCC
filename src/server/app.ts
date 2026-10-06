@@ -19,11 +19,23 @@ import { leadersRouter } from "./routes/leaders"
 import { ministriesRouter } from "./routes/ministries"
 import { galleryRouter } from "./routes/gallery"
 import { uploadsRouter } from "./routes/uploads"
+import { publicContentChanged } from "./lib/public-cache"
 
 // The whole API. It is part of the Next.js app and served from /api/*
 // (see src/app/api/[[...route]]/route.ts). Server components skip HTTP and
 // call it directly through src/lib/server-api.ts.
 export const app = new Hono().basePath("/api")
+
+// Public pages are served from a cache (see lib/public-cache.ts). Once a
+// signed-in member of staff has changed anything, the cached pages are out of
+// date. Things visitors send in (messages, comments, nominations, gifts) are
+// not shown on those pages, and are left out so nobody can empty the cache at will.
+app.use("*", async (c, next) => {
+  await next()
+  const staffChangedSomething = c.req.method !== "GET" && c.res.ok && Boolean(c.get("user"))
+  // Asking for an upload signature stores nothing
+  if (staffChangedSomething && !c.req.path.startsWith("/api/uploads/")) publicContentChanged()
+})
 
 // Staff accounts
 app.route("/auth", authRouter)

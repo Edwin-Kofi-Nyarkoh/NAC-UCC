@@ -3,7 +3,8 @@
 import { Suspense, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Cross, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react"
+import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react"
+import { Logo } from "@/components/layout/logo"
 import { api } from "@/lib/api"
 import { dashboardHome, saveSession, useSession } from "@/lib/session"
 
@@ -120,9 +121,7 @@ export default function LoginPage() {
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary shadow-lg mb-4">
-            <Cross className="w-8 h-8 text-white" />
-          </div>
+          <Logo size={64} className="gap-2.5 mb-4" />
           <h1 className="text-2xl font-bold text-white">NAC UCC</h1>
           <p className="text-silver-400 text-sm mt-1">Staff Portal</p>
         </div>
@@ -138,7 +137,8 @@ export default function LoginPage() {
         </Suspense>
 
         <p className="text-center text-silver-600 text-xs mt-6">
-          <Link href="/" className="hover:text-silver-300 transition-colors">
+          {/* Staff signing in are not about to read the home page: do not preload it */}
+          <Link href="/" prefetch={false} className="hover:text-silver-300 transition-colors">
             ← Return to church website
           </Link>
         </p>

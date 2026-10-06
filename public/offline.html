@@ -1,0 +1,122 @@
+<!doctype html>
+<!--
+  Shown by the service worker (sw.js) when a page is asked for and there is no
+  internet connection. It is a plain file on purpose: it must draw with nothing
+  but itself and the one icon the service worker keeps beside it.
+  The colours are the site's own (src/app/globals.css).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#020d2e" />
+    <meta name="robots" content="noindex" />
+    <title>You're offline | NAC UCC</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #020d2e;
+        background: oklch(0.18 0.09 253);
+        color: #fff;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        text-align: center;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        max-width: 22rem;
+      }
+      img {
+        display: block;
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 28px;
+        border-radius: 16px;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 1.5rem;
+        line-height: 1.25;
+      }
+      p {
+        margin: 0 0 28px;
+        color: #a3adbd;
+        color: oklch(0.72 0.025 248);
+        font-size: 0.9rem;
+        line-height: 1.6;
+      }
+      button {
+        padding: 12px 24px;
+        border: 0;
+        border-radius: 999px;
+        background: #0f3b82;
+        background: oklch(0.32 0.13 253);
+        color: #fff;
+        font: inherit;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+      .name {
+        margin: 36px 0 0;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="" width="72" height="72" />
+      <h1>You're offline</h1>
+      <p>
+        This page needs an internet connection. Check your Wi-Fi or mobile data. The page will open by itself as soon
+        as you are back online.
+      </p>
+      <button type="button" id="retry">Try again</button>
+      <p class="name">NAC UCC Campus Congregation</p>
+    </main>
+    <script>
+      ;(function () {
+        document.getElementById("retry").addEventListener("click", function () {
+          location.reload()
+        })
+
+        // Opens the page once the site can really be reached. Requests to /api
+        // are never answered by the service worker, so an answer here can only
+        // have come over the internet.
+        var asking = false
+        function openWhenBackOnline() {
+          if (asking) return
+          asking = true
+          fetch("/api/health", { cache: "no-store" })
+            .then(function (response) {
+              if (response.ok) location.reload()
+            })
+            .catch(function () {})
+            .then(function () {
+              asking = false
+            })
+        }
+
+        // When the browser says the connection is back (it is not always right,
+        // hence the check), and every so often in case it never says so.
+        window.addEventListener("online", openWhenBackOnline)
+        setInterval(openWhenBackOnline, 15000)
+      })()
+    </script>
+  </body>
+</html>

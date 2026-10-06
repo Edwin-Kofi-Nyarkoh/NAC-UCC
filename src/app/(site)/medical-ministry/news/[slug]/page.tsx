@@ -14,6 +14,12 @@ interface Props {
   params: Promise<{ slug: string }>
 }
 
+// Nothing is built ahead of time. Each of these pages is built the first time
+// someone opens it and then served from the cache, like the rest of the site.
+export function generateStaticParams() {
+  return []
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const data = await serverFetch<{ post: MedicalPost }>(`/medical/${slug}`)

@@ -52,6 +52,22 @@ export function useSaveData(): boolean {
   )
 }
 
+/** False when the browser knows it has no network connection. Assumed online until it can be asked. */
+export function useOnline(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      window.addEventListener("online", onChange)
+      window.addEventListener("offline", onChange)
+      return () => {
+        window.removeEventListener("online", onChange)
+        window.removeEventListener("offline", onChange)
+      }
+    },
+    () => navigator.onLine,
+    () => true
+  )
+}
+
 /** False while the browser tab is in the background. */
 export function usePageVisible(): boolean {
   return useSyncExternalStore(

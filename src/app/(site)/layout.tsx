@@ -4,8 +4,9 @@ import { BottomNav } from "@/components/layout/bottom-nav"
 import { getSiteSettings, serverFetch } from "@/lib/server-api"
 import type { Ministry } from "@/types"
 
-// Public pages read their content from the database on every request, so
-// whatever staff publish in the dashboard shows up straight away.
+// The frame around every public page. Its content, like the pages', comes from
+// the cache described in src/server/lib/public-cache.ts: whatever staff save in
+// the dashboard shows up on the next visit.
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const [settings, ministryData] = await Promise.all([
     getSiteSettings(),

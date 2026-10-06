@@ -1,9 +1,9 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Play, Clock, BookOpen, ArrowRight } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Initials } from "@/components/ui/initials"
 import { cloudinaryUrl } from "@/lib/cloudinary"
-import { formatDate, initials } from "@/lib/utils"
+import { formatDate } from "@/lib/utils"
 import type { Sermon } from "@/types"
 import { SectionLabel } from "@/components/layout/section-label"
 
@@ -81,11 +81,7 @@ export function LatestSermons({ sermons }: LatestSermonsProps) {
                   {sermons[0].description}
                 </p>
                 <div className="flex items-center gap-4">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                      {initials(sermons[0].preacher)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <Initials name={sermons[0].preacher} className="bg-primary/20 text-xs" />
                   <div>
                     <p className="text-white text-sm font-medium">{sermons[0].preacher}</p>
                     <p className="text-silver-500 text-xs">{formatDate(sermons[0].date)}</p>

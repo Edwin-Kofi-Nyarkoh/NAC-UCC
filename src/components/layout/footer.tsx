@@ -1,6 +1,6 @@
-import Link from "next/link"
-import { Cross, MapPin, Phone, Mail } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
+import { MapPin, Phone, Mail } from "lucide-react"
+import { IntentLink } from "@/components/layout/intent-link"
+import { Logo } from "@/components/layout/logo"
 import { SocialLinks } from "@/components/layout/social-links"
 import { footerNav } from "@/config/navigation"
 import { lines, type SiteSettings } from "@/lib/site-settings"
@@ -12,9 +12,9 @@ function LinkColumn({ title, links }: { title: string; links: { label: string; h
       <ul className="space-y-3">
         {links.map((link) => (
           <li key={link.href}>
-            <Link href={link.href} className="text-silver-400 hover:text-white text-sm transition-colors">
+            <IntentLink href={link.href} className="text-silver-400 hover:text-white text-sm transition-colors">
               {link.label}
-            </Link>
+            </IntentLink>
           </li>
         ))}
       </ul>
@@ -33,15 +33,13 @@ export function Footer({ settings }: { settings: SiteSettings }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
           <div>
-            <Link href="/" className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                <Cross className="w-5 h-5 text-primary-foreground" />
-              </div>
+            <IntentLink href="/" className="flex items-center gap-3 mb-5">
+              <Logo />
               <div>
                 <p className="font-bold text-white text-sm leading-tight">NAC UCC</p>
                 <p className="text-silver-400 text-xs leading-tight">Campus Congregation</p>
               </div>
-            </Link>
+            </IntentLink>
             <p className="text-silver-400 text-sm leading-relaxed mb-6">
               A vibrant community of believers on the University of Cape Coast campus, committed to worship, fellowship, and reaching the lost.
             </p>
@@ -108,7 +106,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
           )}
         </div>
 
-        <Separator className="bg-navy-800" />
+        <div className="h-px w-full bg-navy-800" />
 
         <div className="py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-silver-500 text-xs">
           <p>

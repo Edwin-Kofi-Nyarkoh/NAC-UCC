@@ -16,13 +16,8 @@ const givingReasons = [
   { icon: CreditCard, title: "Safe & Secure", desc: "All online transactions are processed securely through Paystack." },
 ]
 
-interface Props {
-  /** Paystack sends the giver back to /give?reference=… after checkout */
-  searchParams: Promise<{ reference?: string | string[] }>
-}
-
-export default async function GivePage({ searchParams }: Props) {
-  const [{ reference }, { bank }] = await Promise.all([searchParams, getSiteSettings()])
+export default async function GivePage() {
+  const { bank } = await getSiteSettings()
 
   return (
     <div className="pt-20">
@@ -44,7 +39,8 @@ export default async function GivePage({ searchParams }: Props) {
       <section className="py-16 bg-background">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-start">
-            <GiveForm reference={typeof reference === "string" ? reference : undefined} />
+            {/* After checkout Paystack returns to /give?reference=…; the form reads that itself */}
+            <GiveForm />
 
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-foreground">Why Your Gift Matters</h2>

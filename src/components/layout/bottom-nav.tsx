@@ -1,8 +1,8 @@
 "use client"
 
-import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, Calendar, Play, Heart, MoreHorizontal, Newspaper } from "lucide-react"
+import { IntentLink } from "@/components/layout/intent-link"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 
@@ -41,14 +41,14 @@ export function BottomNav() {
             <div className="w-8 h-1 bg-border rounded-full mx-auto mb-6" />
             <div className="grid grid-cols-3 gap-3">
               {MORE_LINKS.map(({ label, href }) => (
-                <Link
+                <IntentLink
                   key={href}
                   href={href}
                   onClick={() => setMoreOpen(false)}
                   className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors text-center"
                 >
                   <span className="text-xs font-semibold">{label}</span>
-                </Link>
+                </IntentLink>
               ))}
             </div>
           </div>
@@ -64,7 +64,7 @@ export function BottomNav() {
           {PRIMARY_TABS.map(({ label, href, icon: Icon, match }) => {
             const active = match(pathname)
             return (
-              <Link
+              <IntentLink
                 key={href}
                 href={href}
                 className={cn(
@@ -79,7 +79,7 @@ export function BottomNav() {
                   <Icon className={cn("w-5 h-5", active && "text-primary")} />
                 </div>
                 <span className="leading-none">{label}</span>
-              </Link>
+              </IntentLink>
             )
           })}
 

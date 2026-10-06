@@ -29,7 +29,7 @@ Other commands:
 
 | Command | What it does |
 |---|---|
-| `npm run build` then `npm start` | Build and run for production. The build downloads the site's font from Google, so it needs internet; if it stops with a Google Fonts error, run it again |
+| `npm run build` then `npm start` | Build and run for production. The build downloads the site's font from Google, so it needs internet; if it stops with a Google Fonts error, run it again. It also reads the site's content from the database to prepare the public pages; if the database cannot be reached the build still finishes, and those pages fill in the first time they are opened |
 | `npm run typecheck` | Check the TypeScript types |
 | `npm run lint` | Run ESLint |
 | `npm run db:push` | Apply `prisma/schema.prisma` to the database |
@@ -136,7 +136,10 @@ Where pictures appear on the home page:
 - The newest sermon is shown over its photo.
 
 Online gifts go through Paystack and are not stored by this app; they are listed in
-the church's Paystack account.
+the church's Paystack account. When a giver returns from Paystack the site asks
+Paystack whether the payment went through. If Paystack cannot be reached at that
+moment the giver is told the payment could not be confirmed yet, and can check again;
+they are never told it failed when the site simply does not know.
 
 ## How the code is organised
 
@@ -145,8 +148,12 @@ README.md                   This file
 STAFF-GUIDE.md              How to use the dashboard, for non-developers
 prisma/schema.prisma        The database tables
 scripts/create-admin.ts     Creates the first admin account
-public/                     Icons and the service worker (offline support)
+public/
+  icons/                    The app icon (both logos) in the sizes phones and browsers ask for
+  sw.js                     The service worker: keeps unchanging files, shows the offline page
+  offline.html              The "You're offline" page
 src/
+  assets/logos/             The two emblems shown in the navbar, footer, dashboard and sign-in page
   app/
     (site)/                 The public pages, wrapped in the navbar and footer
     (auth)/login/           Staff sign-in
@@ -156,22 +163,25 @@ src/
     app.ts                  Lists every router and where it is mounted
     routes/                 One file per resource (posts, events, gallery, …)
     middleware/auth.ts      Sign-in and role checks
-    lib/                    Database client, tokens, validation, slugs, Cloudinary signing
+    lib/                    Database client, tokens, validation, slugs, Cloudinary signing,
+                            and public-cache.ts (when cached pages are thrown away)
   components/
-    layout/                 Navbar, footer, mobile tab bar
+    layout/                 Navbar, footer, mobile tab bar, the logo, menu links
+    pwa/                    Registers the service worker; the "You're offline" notice
+    query-provider.tsx      Browser-side data fetching, for the dashboard and two public screens
     home/                   Sections of the home page
     dashboard/              Building blocks shared by the dashboard pages
     content/, gallery/, …   Pieces used by individual public pages
     ui/                     Small generic components
   lib/
     api.ts                  How the browser calls the API
-    server-api.ts           How server-rendered pages read from the API
+    server-api.ts           How public pages read their content (cached)
     session.ts              The signed-in user: storage, cookie, React hook
     site-settings.ts        The shape of the site settings, shared by API and forms
     cloudinary.ts           Builds image and video URLs
     hero-media.ts           Sizes and quality of the home page banner's photos and videos
     upload.ts               Uploads a file to Cloudinary from the browser
-    browser-conditions.ts   What we know about the visitor: data saver, reduced motion, in view
+    browser-conditions.ts   What we know about the visitor: online, data saver, reduced motion, in view
   config/navigation.ts      The menu and footer links
   types/index.ts            The shape of every record the API returns
   proxy.ts                  Keeps signed-out visitors out of the dashboard
@@ -179,9 +189,11 @@ src/
 
 ### How a request flows
 
-- **A visitor opens a page.** The page is rendered on the server. It reads what it
-  needs through `serverFetch()` in `src/lib/server-api.ts`, which calls the API
-  directly, without going over the network.
+- **A visitor opens a page.** They are sent a copy of the page that was built
+  earlier and kept, so nothing is read from the database. When a page does have to be
+  built, it reads what it needs through `serverFetch()` in `src/lib/server-api.ts`,
+  which calls the API directly, without going over the network. See "Pages are kept,
+  not rebuilt on every visit" below.
 - **Staff use the dashboard.** Dashboard pages run in the browser and call the API
   through `api` in `src/lib/api.ts`, which adds the sign-in token to each request.
 - **The API.** Each router in `src/server/routes/` validates its input with Zod and
@@ -242,6 +254,77 @@ A phone with data saver on downloaded 21 KB for a banner that opens on the video
 fallback and the still, and no video. Before these rules the banner sent the same two
 files as 329 KB and 3.5 MB.
 
+### Pages are kept, not rebuilt on every visit
+
+Every public page is built once and the result kept (Next.js calls this incremental
+static regeneration). A visit is answered from the kept copy without touching the
+database: one view of each of the fifteen public pages used to cost 49 database
+queries, and now costs none. `src/server/lib/public-cache.ts` holds the two rules that
+keep the copies honest:
+
+- **Staff save something → every copy is dropped.** A small step in `src/server/app.ts`
+  runs after each API request and does this whenever a signed-in member of staff has
+  changed anything. The next visit to each page builds it afresh, so a change is on the
+  site as soon as someone looks. Things visitors send in (messages, comments,
+  nominations, gifts) do not appear on these pages and do not drop anything.
+- **No copy is trusted for more than five minutes** (`REFRESH_SECONDS`). After that the
+  next visitor still gets the kept copy at once, and a fresh one is built behind them.
+  This covers what nobody "saves": an event passing its date, or an edit made from
+  another copy of the app. A developer's computer shares the live database but not the
+  live site's cache, so a change made from there reaches the live site within five
+  minutes, not at once.
+
+If the database cannot be reached, kept pages go on being served as they are. A page
+that has to be built at that moment is drawn without the content it could not read
+(as an empty section, or "not found" for a single article) and kept for one second
+only, so it rebuilds itself as soon as the database answers again.
+
+To see what happened to a request, look at the `x-nextjs-cache` response header: `HIT`
+(served from the copy), `STALE` (served from the copy while a new one is built) or
+`MISS` (built for this request).
+
+Two smaller things keep first visits light. The menus list every page on every page, so
+their links (`IntentLink`) fetch a page only when a visitor points at, touches or tabs
+to them, instead of preloading them all. And the query library used by the dashboard
+is loaded only where it is needed (`QueryProvider`), not on every public page.
+
+### With no connection
+
+`public/sw.js` is the site's service worker. It runs for the website and the installed
+app alike, and does two things: it keeps files that never change (scripts, styles,
+fonts, icons) on the device, and when a page is asked for with no connection it shows
+`public/offline.html` instead of the browser's error screen. It never keeps a copy of
+a page or of anything from `/api`.
+
+- The offline page keeps the address the visitor asked for, and opens it by itself
+  once the site can be reached again.
+- On a page that is already open, `OfflineNotice` shows "You're offline" for as long
+  as the browser reports no connection.
+- A save attempted with no connection fails with a plain message from `src/lib/api.ts`,
+  and what was typed stays in the form.
+
+When you change `sw.js`, `offline.html` or a file in `public/icons/`, raise the number in
+`CACHE` at the top of `sw.js`; browsers then discard what they had kept. The service
+worker only runs in production builds, never under `npm run dev`.
+
+### The logos
+
+The site carries two emblems: the New Apostolic Church's and the University of Cape
+Coast's.
+
+- In pages they appear side by side through `<Logo>` (`src/components/layout/logo.tsx`),
+  from the files in `src/assets/logos/` (96 px and 192 px of each). The crest sits on a
+  white badge so the pair reads on dark backgrounds and over the banner's photo.
+- The app icon puts both in one square: `public/icons/` holds it at 192 and 512 px, a
+  "maskable" pair with the artwork kept inside the middle (Android may crop icons to
+  a circle), and `apple-touch-icon.png` for iPhones. `src/app/favicon.ico` is the
+  browser-tab icon. `src/app/manifest.ts` and the `icons` entry in `src/app/layout.tsx`
+  point at them.
+
+To replace a logo, replace those files at the same sizes, and raise `CACHE` in `sw.js`.
+A phone that has already installed the app may keep the old icon until the app is
+removed and added again.
+
 ### The database connection
 
 Hosted databases close idle connections, and this site is idle most of the time.
@@ -260,6 +343,12 @@ part-way, and gives up on any single query after 20 seconds instead of hanging.
   few lines using `CollectionManager` — see `src/app/(dashboard)/admin/leaders/page.tsx`.
 - **A new site setting:** add it to `src/lib/site-settings.ts` and to the card in
   `src/app/(dashboard)/admin/settings/page.tsx`. No database change is needed.
+- **A new public page:** read its content with `serverFetch()`. It is then kept and
+  refreshed like every other page, with nothing more to do. A page for a single record
+  (`[slug]`) also exports `generateStaticParams` returning `[]`, as the existing ones do.
+- **A new way for visitors to change something that public pages show:** call
+  `publicContentChanged()` after the change. Changes made by signed-in staff need
+  nothing; they are picked up already.
 - **A new role, or a change to what a role may do:** the role names are in
   `prisma/schema.prisma`; what each may do is decided by the `requireRole()` calls in
   `src/server/routes/`, the page guard in `src/proxy.ts`, and the menus in

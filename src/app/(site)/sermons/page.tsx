@@ -2,11 +2,11 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { Play, Clock, BookOpen } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Initials } from "@/components/ui/initials"
 import { cloudinaryUrl } from "@/lib/cloudinary"
 import { serverFetch } from "@/lib/server-api"
 import type { Sermon } from "@/types"
-import { formatDate, initials } from "@/lib/utils"
+import { formatDate } from "@/lib/utils"
 import { SectionLabel } from "@/components/layout/section-label"
 
 export const metadata: Metadata = {
@@ -79,11 +79,7 @@ export default async function SermonsPage() {
                       {sermon.description}
                     </p>
                     <div className="flex items-center gap-3 pt-3 border-t border-border">
-                      <Avatar className="w-7 h-7">
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                          {initials(sermon.preacher)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <Initials name={sermon.preacher} className="w-7 h-7 text-xs" />
                       <div className="min-w-0">
                         <p className="text-foreground text-xs font-semibold truncate">{sermon.preacher}</p>
                         <p className="text-muted-foreground text-xs">{formatDate(sermon.date)}</p>

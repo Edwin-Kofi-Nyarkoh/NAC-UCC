@@ -6,7 +6,6 @@ import { useState } from "react"
 import {
   Calendar,
   ChevronRight,
-  Cross,
   FileText,
   ImageIcon,
   Images,
@@ -23,6 +22,7 @@ import {
   UsersRound,
   Vote,
 } from "lucide-react"
+import { Logo } from "@/components/layout/logo"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { clearSession, dashboardHome, useSession } from "@/lib/session"
 import { cn, initials } from "@/lib/utils"
@@ -116,10 +116,8 @@ function Sidebar({ user, pathname, onNavigate, onSignOut }: SidebarProps) {
   return (
     <aside className="flex flex-col h-full bg-navy-950 text-white w-64 shrink-0">
       <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
-        <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center">
-          <Cross className="w-4 h-4 text-white" />
-        </div>
-        <div>
+        <Logo size={36} />
+        <div className="min-w-0">
           <p className="font-bold text-sm leading-tight">NAC UCC</p>
           <p className="text-silver-500 text-xs">{roleLabels[user.role]}</p>
         </div>

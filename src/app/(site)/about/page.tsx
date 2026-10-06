@@ -1,12 +1,11 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import { Target, Eye, Heart, Users, BookOpen, Globe } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
+import { Initials } from "@/components/ui/initials"
 import { SectionLabel } from "@/components/layout/section-label"
 import { cloudinaryUrl } from "@/lib/cloudinary"
 import { getSiteSettings, serverFetch } from "@/lib/server-api"
-import { cn, initials } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import type { Leader } from "@/types"
 
 export const metadata: Metadata = {
@@ -91,7 +90,7 @@ export default async function AboutPage() {
               </div>
             </div>
           </section>
-          <Separator />
+          <div className="h-px w-full bg-border" />
         </>
       )}
 
@@ -158,11 +157,10 @@ export default async function AboutPage() {
                       className="w-20 h-20 rounded-full object-cover mx-auto mb-4 ring-4 ring-primary/10 group-hover:ring-primary/30 transition-all"
                     />
                   ) : (
-                    <Avatar className="w-20 h-20 mx-auto mb-4 ring-4 ring-primary/10 group-hover:ring-primary/30 transition-all">
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
-                        {initials(leader.name)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <Initials
+                      name={leader.name}
+                      className="w-20 h-20 mx-auto mb-4 font-bold text-lg ring-4 ring-primary/10 group-hover:ring-primary/30 transition-all"
+                    />
                   )}
                   <h3 className="font-bold text-foreground mb-1">{leader.name}</h3>
                   <p className="text-primary text-sm font-medium mb-3">{leader.title}</p>

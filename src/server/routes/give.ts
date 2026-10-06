@@ -9,6 +9,26 @@ const PAYSTACK_API = "https://api.paystack.co"
 const NOT_CONFIGURED =
   "Online giving is not available yet. Please use the bank transfer details."
 
+/**
+ * Calls Paystack, trying twice. Returns null when it cannot be reached or fails
+ * on its own side, which says nothing about the payment itself.
+ */
+async function askPaystack(path: string, secret: string, init: RequestInit = {}): Promise<Response | null> {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await fetch(`${PAYSTACK_API}${path}`, {
+        ...init,
+        headers: { Authorization: `Bearer ${secret}`, ...init.headers },
+        signal: AbortSignal.timeout(15000),
+      })
+      if (res.status < 500) return res
+    } catch {
+      // Could not connect, or no answer in time
+    }
+  }
+  return null
+}
+
 const initializeSchema = z.object({
   email: z.string().email(),
   amount: z.number().min(1).max(1_000_000), // GH₵
@@ -26,9 +46,10 @@ giveRouter.post("/initialize", validate(initializeSchema), async (c) => {
   const origin =
     process.env.SITE_URL ?? c.req.header("origin") ?? new URL(c.req.url).origin
 
-  const res = await fetch(`${PAYSTACK_API}/transaction/initialize`, {
+  // Asking twice at worst starts two checkouts; only the one the giver is sent to can be paid
+  const res = await askPaystack("/transaction/initialize", secret, {
     method: "POST",
-    headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       email,
       amount: Math.round(amount * 100), // pesewas
@@ -42,6 +63,8 @@ giveRouter.post("/initialize", validate(initializeSchema), async (c) => {
       },
     }),
   })
+  if (!res) return c.json({ error: "Could not reach Paystack just now. Please try again in a moment." }, 502)
+
   const body = (await res.json().catch(() => null)) as {
     status?: boolean
     message?: string
@@ -67,14 +90,16 @@ giveRouter.get("/verify/:reference", async (c) => {
   const reference = c.req.param("reference")
   if (!/^[\w.=-]{1,100}$/.test(reference)) return c.json({ error: "Invalid reference" }, 400)
 
-  const res = await fetch(`${PAYSTACK_API}/transaction/verify/${reference}`, {
-    headers: { Authorization: `Bearer ${secret}` },
-  })
+  const res = await askPaystack(`/transaction/verify/${reference}`, secret)
+  // Not the same as "not paid": the giver may well have been charged
+  if (!res) return c.json({ error: "Could not reach Paystack to confirm this payment." }, 502)
+
   const body = (await res.json().catch(() => null)) as {
     status?: boolean
     data?: { status: string; amount: number; currency: string }
   } | null
 
+  // Paystack answered and knows of no such payment
   if (!res.ok || !body?.status || !body.data) return c.json({ paid: false })
 
   return c.json({

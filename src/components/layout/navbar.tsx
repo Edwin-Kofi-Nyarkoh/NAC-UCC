@@ -1,10 +1,11 @@
 "use client"
 
-import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
 import { useState, useEffect, useRef } from "react"
-import { Menu, X, Sun, Moon, ChevronDown, Cross, Search } from "lucide-react"
+import { Menu, X, Sun, Moon, ChevronDown, Search } from "lucide-react"
+import { Logo } from "@/components/layout/logo"
+import { IntentLink } from "@/components/layout/intent-link"
 import { cn } from "@/lib/utils"
 import { mainNav, type NavItem } from "@/config/navigation"
 
@@ -85,10 +86,8 @@ export function Navbar({ ministries }: NavbarProps) {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
-            <Link href="/" className="flex items-center gap-3 group shrink-0">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                <Cross className="w-5 h-5 text-primary-foreground" />
-              </div>
+            <IntentLink href="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+              <Logo emblemClassName="size-9 sm:size-10" />
               <div>
                 <p className={cn("font-bold text-base leading-tight transition-colors", overHero ? "text-white" : "text-foreground")}>
                   NAC UCC
@@ -97,7 +96,7 @@ export function Navbar({ ministries }: NavbarProps) {
                   Campus Congregation
                 </p>
               </div>
-            </Link>
+            </IntentLink>
 
             {/* Desktop navigation */}
             <nav className="hidden lg:flex items-center gap-1" ref={dropdownRef}>
@@ -120,30 +119,30 @@ export function Navbar({ ministries }: NavbarProps) {
                     {openDropdown === item.label && (
                       <div className="absolute top-full left-0 mt-1 w-52 bg-popover border border-border rounded-lg shadow-lg py-1 z-50 animate-in fade-in-0 zoom-in-95 duration-150">
                         {item.children.map((child) => (
-                          <Link
+                          <IntentLink
                             key={child.href}
                             href={child.href}
                             onClick={() => setOpenDropdown(null)}
                             className="block px-4 py-2 text-sm text-popover-foreground hover:bg-muted hover:text-foreground transition-colors"
                           >
                             {child.label}
-                          </Link>
+                          </IntentLink>
                         ))}
                       </div>
                     )}
                   </div>
                 ) : (
-                  <Link key={item.href} href={item.href} className={linkClass(pathname === item.href)}>
+                  <IntentLink key={item.href} href={item.href} className={linkClass(pathname === item.href)}>
                     {item.label}
-                  </Link>
+                  </IntentLink>
                 )
               )}
             </nav>
 
             <div className="flex items-center gap-1">
-              <Link href="/search" className={cn("w-9 h-9", iconButtonClass)} aria-label="Search">
+              <IntentLink href="/search" className={cn("w-9 h-9", iconButtonClass)} aria-label="Search">
                 <Search className="w-4 h-4" />
-              </Link>
+              </IntentLink>
 
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -154,12 +153,12 @@ export function Navbar({ ministries }: NavbarProps) {
                 <Moon className="w-4 h-4 hidden dark:block" />
               </button>
 
-              <Link
+              <IntentLink
                 href="/give"
                 className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
               >
                 Give
-              </Link>
+              </IntentLink>
 
               <button
                 type="button"
@@ -184,12 +183,10 @@ export function Navbar({ ministries }: NavbarProps) {
           />
           <div className="absolute top-0 left-0 right-0 bg-background shadow-2xl max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-              <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                  <Cross className="w-4 h-4 text-white" />
-                </div>
+              <IntentLink href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5">
+                <Logo size={32} />
                 <span className="font-bold text-foreground">NAC UCC</span>
-              </Link>
+              </IntentLink>
               <button
                 type="button"
                 aria-label="Close menu"
@@ -203,7 +200,7 @@ export function Navbar({ ministries }: NavbarProps) {
             <nav className="px-4 py-4 space-y-1">
               {items.map((item) => (
                 <div key={item.href}>
-                  <Link
+                  <IntentLink
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
                     className={cn(
@@ -212,18 +209,18 @@ export function Navbar({ ministries }: NavbarProps) {
                     )}
                   >
                     {item.label}
-                  </Link>
+                  </IntentLink>
                   {item.children && (
                     <div className="ml-4 mt-1 mb-2 space-y-0.5 border-l-2 border-border pl-3">
                       {item.children.map((child) => (
-                        <Link
+                        <IntentLink
                           key={child.href}
                           href={child.href}
                           onClick={() => setMobileOpen(false)}
                           className="block px-3 py-2 text-sm text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-muted"
                         >
                           {child.label}
-                        </Link>
+                        </IntentLink>
                       ))}
                     </div>
                   )}
@@ -232,13 +229,13 @@ export function Navbar({ ministries }: NavbarProps) {
             </nav>
 
             <div className="px-4 pb-6 pt-2 border-t border-border">
-              <Link
+              <IntentLink
                 href="/give"
                 onClick={() => setMobileOpen(false)}
                 className="flex items-center justify-center w-full py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors"
               >
                 Give / Donate
-              </Link>
+              </IntentLink>
             </div>
           </div>
         </div>

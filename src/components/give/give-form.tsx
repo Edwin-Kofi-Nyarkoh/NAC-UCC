@@ -1,20 +1,30 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useSyncExternalStore } from "react"
 import { cn } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 import { api } from "@/lib/api"
 
 const GIVING_TYPES = ["Tithe", "Offering", "Alumni", "Other"]
 
-type Outcome = "verifying" | "paid" | "unpaid" | null
+// "unconfirmed": we could not ask Paystack, so we do not know either way
+type Outcome = "paid" | "unpaid" | "unconfirmed"
 
-interface GiveFormProps {
-  /** Transaction reference Paystack appends when it sends the giver back here */
-  reference?: string
+/**
+ * The transaction reference Paystack adds to the address when it sends the
+ * giver back here (/give?reference=…). It is read in the browser rather than
+ * on the server, so the page itself can be served from the cache.
+ */
+function usePaymentReference(): string | null {
+  return useSyncExternalStore(
+    () => () => {}, // nothing to listen for: it is read again on every render
+    () => new URLSearchParams(window.location.search).get("reference"),
+    () => null
+  )
 }
 
-export function GiveForm({ reference }: GiveFormProps) {
+export function GiveForm() {
+  const reference = usePaymentReference()
   const [amount, setAmount] = useState("")
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [firstName, setFirstName] = useState("")
@@ -22,7 +32,9 @@ export function GiveForm({ reference }: GiveFormProps) {
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [outcome, setOutcome] = useState<Outcome>(reference ? "verifying" : null)
+  const [outcome, setOutcome] = useState<Outcome | null>(null)
+  // Counts the times the giver has asked us to check with Paystack again
+  const [checks, setChecks] = useState(0)
   const [paidAmount, setPaidAmount] = useState<number | null>(null)
 
   const numAmount = amount ? Number(amount) : 0
@@ -39,12 +51,14 @@ export function GiveForm({ reference }: GiveFormProps) {
         setOutcome(res.paid ? "paid" : "unpaid")
       })
       .catch(() => {
-        if (!cancelled) setOutcome("unpaid")
+        // The check itself failed (no connection, or Paystack unreachable).
+        // That is not a failed payment, and must not be reported as one.
+        if (!cancelled) setOutcome("unconfirmed")
       })
     return () => {
       cancelled = true
     }
-  }, [reference])
+  }, [reference, checks])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -78,7 +92,8 @@ export function GiveForm({ reference }: GiveFormProps) {
     window.history.replaceState(null, "", "/give")
   }
 
-  if (outcome === "verifying") {
+  // Back from Paystack, and the server has not answered yet
+  if (reference && !outcome) {
     return (
       <div className="bg-card border border-border rounded-3xl p-8 text-center text-muted-foreground">
         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3" />
@@ -106,6 +121,27 @@ export function GiveForm({ reference }: GiveFormProps) {
           className="mt-6 px-6 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted transition-colors"
         >
           Give Again
+        </button>
+      </div>
+    )
+  }
+
+  if (outcome === "unconfirmed") {
+    return (
+      <div className="bg-card border border-border rounded-3xl p-8 text-center">
+        <h3 className="text-xl font-bold text-foreground mb-2">We Could Not Confirm Your Payment Yet</h3>
+        <p className="text-muted-foreground text-sm">
+          This does not mean it failed. If you completed the payment, Paystack has it and will email you a receipt.
+          Check your connection, then check again.
+        </p>
+        <button
+          onClick={() => {
+            setOutcome(null)
+            setChecks((count) => count + 1)
+          }}
+          className="mt-6 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+        >
+          Check Again
         </button>
       </div>
     )

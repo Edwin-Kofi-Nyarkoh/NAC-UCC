@@ -434,6 +434,27 @@ stops videos playing by themselves. On an ordinary slow connection the video doe
 play, but only once enough of it has arrived; the fallback picture and then the
 still are shown while it loads.
 
+**"It says You're offline."**
+Your phone or computer has no internet connection just then. A small notice
+appears at the bottom of the page you are on, and any page you try to open shows
+"You're offline" instead. Nothing is wrong with the site. Once the connection is
+back the notice goes and the page opens by itself.
+
+If you pressed a save or publish button while offline, nothing was saved, but
+nothing was lost either: what you typed is still in the form. Wait for the
+connection, then press the button again.
+
+**"A giver says the site could not confirm their payment."**
+After paying, a giver may see *We Could Not Confirm Your Payment Yet*. It means
+the site could not reach Paystack to ask, not that the payment failed. They can
+press **Check Again**. The gift itself is recorded by Paystack either way, so the
+church's Paystack account is the place to look, and Paystack emails the giver a
+receipt.
+
+**"The app on my phone still has the old icon."**
+A phone that added the site to its home screen before the logos changed may keep
+the old icon. Remove the app from the home screen and add it again.
+
 **"It says a field 'must be at least … characters'."**
 The message names the field. Titles need at least 3 characters and article text
 at least 10.

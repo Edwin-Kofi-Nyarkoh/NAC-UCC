@@ -3,17 +3,24 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ArrowLeft, BookOpen, User, Clock, Calendar } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Initials } from "@/components/ui/initials"
 import { serverFetch } from "@/lib/server-api"
 import type { Sermon } from "@/types"
-import { formatDate, initials } from "@/lib/utils"
+import { formatDate } from "@/lib/utils"
 import { cloudinaryUrl, cloudinaryVideoUrl, cloudinaryVideoPoster } from "@/lib/cloudinary"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { ShareButton } from "@/components/ui/share-button"
 import { SermonComments } from "@/components/sermons/sermon-comments"
+import { QueryProvider } from "@/components/query-provider"
 
 interface Props {
   params: Promise<{ slug: string }>
+}
+
+// Nothing is built ahead of time. Each of these pages is built the first time
+// someone opens it and then served from the cache, like the rest of the site.
+export function generateStaticParams() {
+  return []
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -82,11 +89,7 @@ export default async function SermonDetailPage({ params }: Props) {
           )}
 
           <div className="flex items-center gap-4 mb-8 p-5 bg-muted/50 rounded-2xl border border-border">
-            <Avatar className="w-12 h-12">
-              <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                {initials(sermon.preacher)}
-              </AvatarFallback>
-            </Avatar>
+            <Initials name={sermon.preacher} className="w-12 h-12 font-bold" />
             <div>
               <p className="font-bold text-foreground">{sermon.preacher}</p>
               <p className="text-muted-foreground text-sm">{formatDate(sermon.date)}</p>
@@ -103,7 +106,10 @@ export default async function SermonDetailPage({ params }: Props) {
           </div>
 
           {/* Comments */}
-          <SermonComments sermonId={sermon.id} />
+          {/* Comments are loaded in the browser, so they are always current */}
+          <QueryProvider>
+            <SermonComments sermonId={sermon.id} />
+          </QueryProvider>
         </div>
       </section>
     </div>

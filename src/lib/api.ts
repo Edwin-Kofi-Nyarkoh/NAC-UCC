@@ -37,11 +37,21 @@ async function request<T>(path: string, method: "GET" | Method = "GET", body?: u
   const headers: Record<string, string> = { "Content-Type": "application/json" }
   if (token) headers.Authorization = `Bearer ${token}`
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
+  let res: Response
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
+  } catch {
+    // The request never reached the server. Nothing was saved or changed.
+    throw new Error(
+      navigator.onLine
+        ? "Could not reach the site. Check your internet connection and try again."
+        : "You're offline. Check your internet connection and try again."
+    )
+  }
   const data = await res.json().catch(() => ({}))
 
   // The session expired or the account was suspended: sign out and send them
