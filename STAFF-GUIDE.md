@@ -322,12 +322,25 @@ left off the site.
 | **Service Times** | One row per service: name, day, time, optional note | Home page ("Join Us for Worship") and the foot of every page |
 | **Contact Details** | Address, phone, email, office hours; map latitude and longitude | Contact page and the foot of every page |
 | **Social Media** | Full links (starting `https://`) to our Facebook, YouTube, Instagram and Twitter/X pages | An icon for each one filled in, on the Contact page and the foot of every page |
-| **About Page** | Our history, vision and mission; a timeline of year + what happened | About page |
+| **About Page** | Our history, vision and mission; a timeline of year + what happened; the church website link | About page |
 | **Bank Details** | Bank name, account name, account number, branch — all four, or none | Give page |
 
 To show a **map** on the Contact page, fill in both latitude and longitude. To
 find them: in Google Maps, right-click the church's location and click the two
 numbers at the top of the menu to copy them. The first is the latitude.
+
+To add a **"Read More About Us" button** at the bottom of the About page, for
+visitors who want to read more about the New Apostolic Church (its history,
+what we believe and more):
+
+1. In the **About Page** card, paste the address of the church's website into
+   **Church website**. It must be the full address, starting with `https://`.
+2. Optionally type your own wording for the button into **Button text**. Left
+   blank, it says *Read More About Us*.
+3. Press **Save about page**.
+
+The button opens that website in a new tab. To take the button off again, clear
+the **Church website** box and save.
 
 ---
 

@@ -17,8 +17,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   return (
     <>
       <Navbar ministries={ministries.map(({ name, slug }) => ({ name, slug }))} />
-      {/* Bottom padding leaves room for the mobile tab bar */}
-      <main className="flex-1 pb-[calc(56px+env(safe-area-inset-bottom))] lg:pb-0">{children}</main>
+      <main className="flex-1">{children}</main>
       <Footer settings={settings} />
       <BottomNav />
     </>

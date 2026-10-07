@@ -29,7 +29,8 @@ export function Footer({ settings }: { settings: SiteSettings }) {
   const hasContact = Boolean(address || contact.phone || contact.email)
 
   return (
-    <footer className="bg-navy-950 text-silver-200">
+    // The space at the very bottom keeps the last lines clear of the phone's tab bar
+    <footer className="bg-navy-950 text-silver-200 pb-[calc(56px+env(safe-area-inset-bottom))] lg:pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
           <div>

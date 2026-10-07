@@ -23,14 +23,12 @@ const NEVER_SENT = ["P1001", "P1002", "P2024"]
 const INTERRUPTED = ["P1008", "P1017"]
 const READS = ["findUnique", "findUniqueOrThrow", "findFirst", "findFirstOrThrow", "findMany", "count", "aggregate", "groupBy"]
 
-function errorCode(error: unknown): string {
-  if (error instanceof Prisma.PrismaClientKnownRequestError) return error.code
-  if (error instanceof Prisma.PrismaClientInitializationError) return error.errorCode ?? ""
-  return ""
-}
-
 function worthRetrying(error: unknown, operation: string): boolean {
-  const code = errorCode(error)
+  // The client could not open a connection at all (the server was unreachable,
+  // the handshake failed or timed out), so nothing was sent
+  if (error instanceof Prisma.PrismaClientInitializationError) return true
+
+  const code = error instanceof Prisma.PrismaClientKnownRequestError ? error.code : ""
   return NEVER_SENT.includes(code) || (INTERRUPTED.includes(code) && READS.includes(operation))
 }
 

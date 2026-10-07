@@ -123,7 +123,7 @@ and a section of the site stays hidden until it has content.
 | News, events, sermons | `/admin/…` or `/editor/…` | Admin, Church Editor |
 | Health news and alerts | `/admin/medical` or `/medical/posts` | Admin, Medical Minister |
 | Home page banner (fallback picture, photo and video slides), leaders, ministries, gallery | `/admin/hero-slides`, `/admin/leaders`, `/admin/ministries`, `/admin/gallery` | Admin |
-| Service times, contact details, social links, About page text, bank details | `/admin/settings` | Admin |
+| Service times, contact details, social links, About page text and its link to the wider church's website, bank details | `/admin/settings` | Admin |
 | Sermon comments, contact messages, nominations | `/admin/comments`, `/admin/messages`, `/admin/nominations` | Admin |
 | Staff accounts | `/admin/users` | Admin |
 

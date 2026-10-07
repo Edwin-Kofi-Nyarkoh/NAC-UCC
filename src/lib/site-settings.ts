@@ -7,6 +7,10 @@ import { z } from "zod"
 
 const text = z.string().trim()
 const optionalUrl = text.url("must be a full link, starting with https://").or(z.literal(""))
+// A link visitors are sent to: web addresses only, never anything else a browser would follow
+const optionalWebsite = text
+  .regex(/^https?:\/\/\S+$/i, "must be a full link, starting with https://")
+  .or(z.literal(""))
 
 export const bankSchema = z
   .object({ bankName: text, accountName: text, accountNo: text, branch: text })
@@ -58,6 +62,12 @@ export const aboutSchema = z.object({
       })
     )
     .max(30),
+  // The wider church's website. Set → the About page ends with a button that
+  // opens it, for visitors who want to read more. Both have a default, so About
+  // content saved before these two existed still loads.
+  churchWebsite: optionalWebsite.default(""),
+  // What that button says; blank → the standard wording
+  churchWebsiteButton: text.max(40, "must be 40 characters or fewer").default(""),
 })
 
 export const heroSchema = z.object({
@@ -99,7 +109,7 @@ export const emptySettings: SiteSettings = {
   contact: { address: "", phone: "", email: "", officeHours: "", mapLatitude: null, mapLongitude: null },
   social: { facebook: "", youtube: "", instagram: "", twitter: "" },
   serviceTimes: [],
-  about: { history: "", vision: "", mission: "", timeline: [] },
+  about: { history: "", vision: "", mission: "", timeline: [], churchWebsite: "", churchWebsiteButton: "" },
   hero: { fallbackImage: "" },
 }
 

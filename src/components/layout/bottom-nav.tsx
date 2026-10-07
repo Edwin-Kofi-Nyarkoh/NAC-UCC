@@ -1,20 +1,22 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { Home, Calendar, Play, Heart, MoreHorizontal, Newspaper } from "lucide-react"
+import { Home, Play, Heart, MoreHorizontal, Newspaper } from "lucide-react"
 import { IntentLink } from "@/components/layout/intent-link"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 
+// The tab bar holds four pages and "More". Five is as many as sit comfortably
+// across a phone; every other page is one tap further, in the More sheet.
 const PRIMARY_TABS = [
   { label: "Home", href: "/", icon: Home, match: (p: string) => p === "/" },
-  { label: "Events", href: "/events", icon: Calendar, match: (p: string) => p.startsWith("/events") },
   { label: "Sermons", href: "/sermons", icon: Play, match: (p: string) => p.startsWith("/sermons") },
   { label: "News", href: "/news", icon: Newspaper, match: (p: string) => p.startsWith("/news") },
   { label: "Medical", href: "/medical-ministry", icon: Heart, match: (p: string) => p.startsWith("/medical-ministry") },
 ]
 
 const MORE_LINKS = [
+  { label: "Events", href: "/events" },
   { label: "About", href: "/about" },
   { label: "Ministries", href: "/ministries" },
   { label: "Gallery", href: "/gallery" },
@@ -25,6 +27,9 @@ const MORE_LINKS = [
 export function BottomNav() {
   const pathname = usePathname()
   const [moreOpen, setMoreOpen] = useState(false)
+
+  // "More" is lit while its sheet is open, and on the pages that live inside it
+  const moreActive = moreOpen || MORE_LINKS.some(({ href }) => pathname.startsWith(href))
 
   return (
     <>
@@ -45,7 +50,12 @@ export function BottomNav() {
                   key={href}
                   href={href}
                   onClick={() => setMoreOpen(false)}
-                  className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors text-center"
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-colors text-center",
+                    pathname.startsWith(href)
+                      ? "bg-primary/10 text-primary"
+                      : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                  )}
                 >
                   <span className="text-xs font-semibold">{label}</span>
                 </IntentLink>
@@ -85,12 +95,13 @@ export function BottomNav() {
 
           <button
             onClick={() => setMoreOpen((v) => !v)}
+            aria-expanded={moreOpen}
             className={cn(
               "flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-xs font-medium transition-colors",
-              moreOpen ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              moreActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <div className={cn("w-9 h-6 rounded-full flex items-center justify-center", moreOpen && "bg-primary/10")}>
+            <div className={cn("w-9 h-6 rounded-full flex items-center justify-center transition-colors", moreActive && "bg-primary/10")}>
               <MoreHorizontal className="w-5 h-5" />
             </div>
             <span className="leading-none">More</span>

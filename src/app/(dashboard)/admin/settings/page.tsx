@@ -267,7 +267,7 @@ function SocialCard({ initial }: { initial: SiteSettings["social"] }) {
 function AboutCard({ initial }: { initial: SiteSettings["about"] }) {
   const [about, setAbout] = useState(initial)
 
-  const set = (field: "history" | "vision" | "mission") => (value: string) =>
+  const set = (field: "history" | "vision" | "mission" | "churchWebsite" | "churchWebsiteButton") => (value: string) =>
     setAbout((current) => ({ ...current, [field]: value }))
 
   return (
@@ -301,6 +301,21 @@ function AboutCard({ initial }: { initial: SiteSettings["about"] }) {
           ]}
         />
       </div>
+      <TextField
+        label="Church website"
+        type="url"
+        value={about.churchWebsite}
+        onChange={set("churchWebsite")}
+        placeholder="https://…"
+        hint="Puts a button at the bottom of the About page that opens this website, for visitors who want to read more about the New Apostolic Church: its history, beliefs and more. Leave blank for no button."
+      />
+      <TextField
+        label="Button text"
+        value={about.churchWebsiteButton}
+        onChange={set("churchWebsiteButton")}
+        placeholder="Read More About Us"
+        hint="Optional. What the button says."
+      />
     </SettingsCard>
   )
 }
