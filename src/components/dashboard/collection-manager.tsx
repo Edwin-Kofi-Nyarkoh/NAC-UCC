@@ -9,10 +9,11 @@ import {
   ErrorBanner,
   LoadingState,
   PrimaryButton,
+  SelectField,
   TextAreaField,
   TextField,
 } from "@/components/dashboard/form-fields"
-import { MediaField } from "@/components/dashboard/media-field"
+import { MediaField, MediaListField } from "@/components/dashboard/media-field"
 import type { MediaInfo } from "@/lib/api"
 import { cloudinaryUrl, cloudinaryVideoPoster } from "@/lib/cloudinary"
 
@@ -24,7 +25,9 @@ export interface CollectionField {
   /** The record's property this input edits */
   name: string
   label: string
-  kind?: "text" | "textarea"
+  kind?: "text" | "textarea" | "select"
+  /** For a select: what can be chosen. The placeholder names the "none" choice. */
+  options?: readonly string[]
   placeholder?: string
   hint?: string
 }
@@ -43,8 +46,12 @@ interface CollectionManagerProps<T extends { id: string }> {
     reorder?: (ids: string[]) => Promise<unknown>
   }
   fields: CollectionField[]
-  /** Set when each item has a photo (or video) */
-  media?: { label: string; allowVideo?: boolean; required?: boolean; hint?: string }
+  /**
+   * Set when each item has a photo (or video). With `addUpTo`, several can be
+   * chosen when adding, and each one becomes an item of its own; `hint` then
+   * explains that, and is left out when editing an item, which has the one.
+   */
+  media?: { label: string; allowVideo?: boolean; required?: boolean; hint?: string; addUpTo?: number }
   /** The photo or video an existing item has, if any */
   mediaOf?: (item: T) => MediaInfo | null
   /** Turns the form's values into what the API expects */
@@ -178,6 +185,7 @@ export function CollectionManager<T extends { id: string }>(props: CollectionMan
           {...props}
           item={editing.item}
           onClose={() => setEditing(null)}
+          onSomeSaved={refresh}
           onSaved={() => {
             setEditing(null)
             refresh()
@@ -219,23 +227,50 @@ interface ItemFormProps<T extends { id: string }> extends CollectionManagerProps
   item: T | null
   onClose: () => void
   onSaved: () => void
+  /** When adding several, some were saved before one failed */
+  onSomeSaved: () => void
 }
 
 function ItemForm<T extends { id: string }>(props: ItemFormProps<T>) {
-  const { noun, resource, fields, media, mediaOf, toInput, item, onClose, onSaved } = props
+  const { noun, resource, fields, media, mediaOf, toInput, item, onClose, onSaved, onSomeSaved } = props
+  // Several can be chosen only when adding; an existing item has the one
+  const addUpTo = item ? 1 : (media?.addUpTo ?? 1)
 
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       fields.map((field) => [field.name, String((item as Record<string, unknown> | null)?.[field.name] ?? "")])
     )
   )
-  const [chosenMedia, setChosenMedia] = useState<MediaInfo | null>(() => (item && mediaOf ? mediaOf(item) : null))
+  const [chosenMedia, setChosenMedia] = useState<MediaInfo[]>(() => {
+    const existing = item && mediaOf ? mediaOf(item) : null
+    return existing ? [existing] : []
+  })
   const [error, setError] = useState("")
 
+  /** Choosing or removing a photo answers "please add a photo first", so that message goes. */
+  function changeMedia(chosen: MediaInfo[]) {
+    setError("")
+    setChosenMedia(chosen)
+  }
+
   const save = useMutation({
-    mutationFn: () => {
-      const input = toInput(values, chosenMedia)
-      return item ? resource.update(item.id, input) : resource.create(input)
+    mutationFn: async () => {
+      if (item) return resource.update(item.id, toInput(values, chosenMedia[0] ?? null))
+
+      // One new item for each photo or video chosen (or a single one without)
+      const each = chosenMedia.length > 0 ? chosenMedia : [null]
+      for (const [done, picked] of each.entries()) {
+        try {
+          await resource.create(toInput(values, picked))
+        } catch (e) {
+          if (done === 0) throw e
+          // Those already saved come off the list, so pressing Save again adds only the rest
+          setChosenMedia(chosenMedia.slice(done))
+          onSomeSaved()
+          const reason = e instanceof Error ? e.message : "Something went wrong"
+          throw new Error(`${done} of ${each.length} were added. The next one was not: ${reason}`)
+        }
+      }
     },
     onSuccess: onSaved,
     onError: (e: Error) => setError(e.message),
@@ -244,7 +279,7 @@ function ItemForm<T extends { id: string }>(props: ItemFormProps<T>) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
-    if (media?.required && !chosenMedia) {
+    if (media?.required && chosenMedia.length === 0) {
       setError(`Please add ${media.allowVideo ? "a photo or video" : "a photo"} first.`)
       return
     }
@@ -256,15 +291,25 @@ function ItemForm<T extends { id: string }>(props: ItemFormProps<T>) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <ErrorBanner message={error} />
 
-        {media && (
-          <MediaField
-            label={media.label}
-            value={chosenMedia}
-            onChange={setChosenMedia}
-            allowVideo={media.allowVideo}
-            hint={media.hint}
-          />
-        )}
+        {media &&
+          (addUpTo > 1 ? (
+            <MediaListField
+              label={media.label}
+              value={chosenMedia}
+              onChange={changeMedia}
+              max={addUpTo}
+              allowVideo={media.allowVideo}
+              hint={media.hint}
+            />
+          ) : (
+            <MediaField
+              label={media.label}
+              value={chosenMedia[0] ?? null}
+              onChange={(chosen) => changeMedia(chosen ? [chosen] : [])}
+              allowVideo={media.allowVideo}
+              hint={(media.addUpTo ?? 1) > 1 ? undefined : media.hint}
+            />
+          ))}
 
         {fields.map((field) => {
           const shared = {
@@ -274,11 +319,22 @@ function ItemForm<T extends { id: string }>(props: ItemFormProps<T>) {
             placeholder: field.placeholder,
             hint: field.hint,
           }
-          return field.kind === "textarea" ? (
-            <TextAreaField key={field.name} {...shared} rows={4} />
-          ) : (
-            <TextField key={field.name} {...shared} />
-          )
+          if (field.kind === "textarea") return <TextAreaField key={field.name} {...shared} rows={4} />
+          if (field.kind === "select") {
+            // A value saved before the list existed stays choosable, so editing does not lose it
+            const choices = [...new Set([...(field.options ?? []), ...(shared.value ? [shared.value] : [])])]
+            return (
+              <SelectField
+                key={field.name}
+                label={shared.label}
+                value={shared.value}
+                onChange={shared.onChange}
+                hint={shared.hint}
+                options={[{ value: "", label: field.placeholder ?? "None" }, ...choices.map((choice) => ({ value: choice, label: choice }))]}
+              />
+            )
+          }
+          return <TextField key={field.name} {...shared} />
         })}
 
         <div className="flex gap-3 pt-2">

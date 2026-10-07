@@ -5,12 +5,15 @@ interface ValidationError {
   issues: readonly { path: readonly PropertyKey[]; message: string }[]
 }
 
+// Fields whose name in the code is not what the forms call them
+const FORM_NAMES: Record<string, string> = { ctaLabel: "button text", ctaHref: "button link" }
+
 /** ["serviceTimes", 0, "day"] → "Service times, row 1, day" */
 function fieldLabel(path: readonly PropertyKey[]): string {
   const words = path.map((part) =>
     typeof part === "number"
       ? `row ${part + 1}`
-      : String(part).replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase()
+      : (FORM_NAMES[String(part)] ?? String(part).replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase())
   )
   const label = words.join(", ")
   return label.charAt(0).toUpperCase() + label.slice(1)

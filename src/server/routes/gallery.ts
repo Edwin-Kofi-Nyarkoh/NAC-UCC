@@ -1,5 +1,6 @@
 import { Hono } from "hono"
 import { z } from "zod"
+import { GALLERY_CATEGORIES } from "@/lib/gallery"
 import { prisma } from "../lib/prisma"
 import { requiredText, validate } from "../lib/validate"
 import { adminWrites } from "../middleware/auth"
@@ -13,7 +14,8 @@ const galleryItemSchema = z.object({
   type: z.enum(["image", "video"]),
   publicId: requiredText(1),
   caption: z.string().trim().optional(),
-  category: z.string().trim().optional(),
+  // One from the list, or none
+  category: z.enum(["", ...GALLERY_CATEGORIES], "must be one of the categories in the list").optional(),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
 })

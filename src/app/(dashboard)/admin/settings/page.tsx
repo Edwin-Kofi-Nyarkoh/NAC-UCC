@@ -267,7 +267,7 @@ function SocialCard({ initial }: { initial: SiteSettings["social"] }) {
 function AboutCard({ initial }: { initial: SiteSettings["about"] }) {
   const [about, setAbout] = useState(initial)
 
-  const set = (field: "history" | "vision" | "mission" | "churchWebsite" | "churchWebsiteButton") => (value: string) =>
+  const set = (field: "history" | "story" | "vision" | "mission" | "churchWebsite" | "churchWebsiteButton") => (value: string) =>
     setAbout((current) => ({ ...current, [field]: value }))
 
   return (
@@ -283,7 +283,14 @@ function AboutCard({ initial }: { initial: SiteSettings["about"] }) {
         rows={6}
         value={about.history}
         onChange={set("history")}
-        hint="Leave a blank line between paragraphs."
+        hint="The short version, shown on the About page itself. Leave a blank line between paragraphs."
+      />
+      <TextAreaField
+        label="Our full story"
+        rows={12}
+        value={about.story}
+        onChange={set("story")}
+        hint="The long version: how NAC UCC was established and how it has grown. It gets a page of its own, opened with a “Read Our Full Story” button at the bottom of the About page. Leave a blank line between paragraphs."
       />
       <TextAreaField label="Our vision" value={about.vision} onChange={set("vision")} />
       <TextAreaField label="Our mission" value={about.mission} onChange={set("mission")} />

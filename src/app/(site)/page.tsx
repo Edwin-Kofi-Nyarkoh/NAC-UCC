@@ -27,7 +27,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero slides={slideData?.slides ?? []} fallbackImage={settings.hero.fallbackImage} />
+      <Hero slides={slideData?.slides ?? []} fallback={settings.hero} />
       <WelcomeSection />
       <ServiceTimesBanner
         services={settings.serviceTimes}

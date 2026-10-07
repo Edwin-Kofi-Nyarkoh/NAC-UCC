@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Image from "next/image"
-import { Target, Eye, Heart, Users, BookOpen, Globe, ExternalLink } from "lucide-react"
+import Link from "next/link"
+import { Target, Eye, Heart, Users, BookOpen, Globe, ExternalLink, ArrowRight } from "lucide-react"
 import { Initials } from "@/components/ui/initials"
 import { SectionLabel } from "@/components/layout/section-label"
 import { cloudinaryUrl } from "@/lib/cloudinary"
@@ -20,15 +21,15 @@ const values = [
   { icon: Globe, title: "Mission", desc: "We are called to reach the lost and make disciples of all nations." },
 ]
 
-// The history, vision, mission, timeline and the church website link are set
-// under Admin → Site Settings, and the leaders under Admin → Leaders. A section
-// only appears once it has content.
+// The history, full story, vision, mission, timeline and the church website
+// link are set under Admin → Site Settings, and the leaders under Admin →
+// Leaders. A section only appears once it has content.
 export default async function AboutPage() {
   const [settings, leaderData] = await Promise.all([
     getSiteSettings(),
     serverFetch<{ leaders: Leader[] }>("/leaders"),
   ])
-  const { history, vision, mission, timeline, churchWebsite, churchWebsiteButton } = settings.about
+  const { history, story, vision, mission, timeline, churchWebsite, churchWebsiteButton } = settings.about
   const leaders = leaderData?.leaders ?? []
 
   const statements = [
@@ -172,8 +173,9 @@ export default async function AboutPage() {
         </section>
       )}
 
-      {/* For visitors who want more than this page holds: the wider church's own website */}
-      {churchWebsite && (
+      {/* For visitors who want more than this page holds: the full story on its
+          own page, and the wider church's website */}
+      {(story || churchWebsite) && (
         <section id="read-more" className="py-20 lg:py-24 bg-navy-950 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
@@ -183,19 +185,38 @@ export default async function AboutPage() {
             <SectionLabel centered>Read More</SectionLabel>
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-5">There Is More to Our Story</h2>
             <p className="text-silver-300 text-lg leading-relaxed mb-9">
-              NAC UCC is one congregation of the New Apostolic Church. Read more about us, our history,
-              what we believe and more on the church&apos;s website.
+              {story
+                ? "Read how NAC UCC was established, and how the congregation has grown since."
+                : "NAC UCC is one congregation of the New Apostolic Church. Read more about us, our history, what we believe and more on the church's website."}
             </p>
-            <a
-              href={churchWebsite}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg"
-            >
-              {churchWebsiteButton || "Read More About Us"}
-              <ExternalLink className="w-4 h-4" aria-hidden />
-              <span className="sr-only">(opens in a new tab)</span>
-            </a>
+            <div className="flex flex-wrap justify-center gap-4">
+              {story && (
+                <Link
+                  href="/about/our-story"
+                  className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg"
+                >
+                  Read Our Full Story <ArrowRight className="w-4 h-4" aria-hidden />
+                </Link>
+              )}
+              {churchWebsite && (
+                <a
+                  href={churchWebsite}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "inline-flex items-center gap-2 px-8 py-4 rounded-full text-white text-sm transition-colors",
+                    // The second of two buttons is the quieter one
+                    story
+                      ? "bg-white/10 backdrop-blur-sm border border-white/20 font-semibold hover:bg-white/20"
+                      : "bg-primary font-bold hover:bg-primary/90 shadow-lg"
+                  )}
+                >
+                  {churchWebsiteButton || "Read More About Us"}
+                  <ExternalLink className="w-4 h-4" aria-hidden />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
+              )}
+            </div>
           </div>
         </section>
       )}

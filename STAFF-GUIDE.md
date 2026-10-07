@@ -130,6 +130,9 @@ service called Cloudinary. If the file is already there:
 
 To take a photo off again, press the bin beside its preview.
 
+**Several at once.** In the Gallery you can add up to five photos and videos in
+one go; see [Gallery](#gallery) below.
+
 Tips:
 - Use the original photo. The site makes the smaller sizes it needs by itself,
   so visitors never download the full-size file.
@@ -147,7 +150,7 @@ other two happen by themselves whenever a post or sermon with a photo is publish
 ### 1. The banner at the top — admin
 
 The banner is the large area behind the welcome at the top of the home page. You
-build it under **Home Page Banner** in the menu, from two things.
+build it under **Home Page Banner** in the menu, from three things.
 
 **The fallback picture.** One still photo. Visitors see it the instant the page
 opens, softly out of focus, while the first slide is still downloading — so the
@@ -159,14 +162,30 @@ at all, the fallback picture is the banner, shown sharp.
 - To change it: press the bin beside it, then add another.
 - Choose a wide (landscape) photo of the congregation or the chapel.
 
+**The words on the banner.** The large headline, the line under it and the first
+button. Left alone, the banner says *Welcome to NAC UCC* with an *Upcoming
+Events* button. To put your own words there, under **Words on the banner**:
+
+1. Type a **Banner headline** (the large text) and a **Banner supporting line**
+   (the smaller text under it). Either can be left blank to keep the standard
+   wording for that part.
+2. For your own button, fill in both **Banner button text** (for example *Join
+   Us This Sunday*) and **Banner button link** — a page on our own site, starting
+   with `/`, such as `/events` or `/give`. With only one of the two filled in, the
+   standard button stays.
+3. Press **Save words**, and wait for **Words saved**.
+
+These words show over the fallback picture, and over any slide that has no
+headline of its own. To go back to the standard welcome, clear the boxes and save.
+
 **The slides.** Photos and videos that play over the fallback picture, one after
 another.
 
 1. Press **Add slide**.
 2. Add the **Photo or video**.
 3. Optionally type a **Headline** (the large text) and a **Supporting line**. A
-   slide with no headline shows the standard welcome, so you can add a slide that
-   is only a background.
+   slide with no headline shows the banner's own words (above), so you can add a
+   slide that is only a background.
 4. Optionally add a button: **Button text** (for example *Join Us This Sunday*)
    and **Button link** — a page on our own site, starting with `/`, such as
    `/events` or `/about`.
@@ -306,8 +325,20 @@ under **Ministries** in the site's top menu. Renaming a ministry later does not
 change its page address, so links people have saved keep working.
 
 ### Gallery
-**Gallery → Add photo.** The photo or video, and optionally a Caption and a
-Category (for example *Services*, *Outreach*, *Youth*).
+**Gallery → Add photo.** Add the photos or videos, and optionally a Caption and
+a Category.
+
+- **From 1 to 5 at a time.** Press **Upload photos or videos** and pick up to
+  five files together, or add them one after another; each shows a small preview
+  as it arrives, and the heading counts them (*3 of 5*). The bin beside a preview
+  takes that one off again. When you press **Save**, each becomes its own item in
+  the gallery, with the caption and category you chose. For more than five, save
+  these and press **Add photo** again.
+- **Category** is a list to choose from: Divine Service, Events, Outreach,
+  Youth, Choir & Music, Sunday School, Medical Ministry, Fellowship or Other.
+  Leave it on *No category* if none fits.
+- The pencil beside an item changes its caption, category or picture, one item
+  at a time.
 
 The newest are shown first. Once photos have more than one category, visitors get
 buttons to filter by category. Clicking a photo opens it full-screen.
@@ -322,16 +353,29 @@ left off the site.
 | **Service Times** | One row per service: name, day, time, optional note | Home page ("Join Us for Worship") and the foot of every page |
 | **Contact Details** | Address, phone, email, office hours; map latitude and longitude | Contact page and the foot of every page |
 | **Social Media** | Full links (starting `https://`) to our Facebook, YouTube, Instagram and Twitter/X pages | An icon for each one filled in, on the Contact page and the foot of every page |
-| **About Page** | Our history, vision and mission; a timeline of year + what happened; the church website link | About page |
+| **About Page** | Our history (the short version), our full story, vision and mission; a timeline of year + what happened; the church website link | About page, and the "Our Story" page |
 | **Bank Details** | Bank name, account name, account number, branch — all four, or none | Give page |
 
 To show a **map** on the Contact page, fill in both latitude and longitude. To
 find them: in Google Maps, right-click the church's location and click the two
 numbers at the top of the menu to copy them. The first is the latitude.
 
-To add a **"Read More About Us" button** at the bottom of the About page, for
-visitors who want to read more about the New Apostolic Church (its history,
-what we believe and more):
+To give visitors **the full story to read** — how NAC UCC was established and
+how it has grown:
+
+1. In the **About Page** card, type or paste it into **Our full story**. Write as
+   much as you like; leave an empty line between paragraphs.
+2. Press **Save about page**.
+
+A **Read Our Full Story** button then appears at the bottom of the About page.
+It opens a page of its own, made for reading, with your text under the heading
+*How NAC UCC Began*. **Our history** stays what it was: the short version, shown
+on the About page itself. To take the story page and its button away again,
+clear the **Our full story** box and save.
+
+To add a **"Read More About Us" button** as well, for visitors who want to read
+more about the New Apostolic Church as a whole (its history, what we believe and
+more):
 
 1. In the **About Page** card, paste the address of the church's website into
    **Church website**. It must be the full address, starting with `https://`.
@@ -467,6 +511,16 @@ receipt.
 **"The app on my phone still has the old icon."**
 A phone that added the site to its home screen before the logos changed may keep
 the old icon. Remove the app from the home screen and add it again.
+
+**"There are events and posts on the site that nobody here wrote."**
+Their names are ordinary (*Sunday Divine Service*, *Staying Well in Exam
+Season*), but each ends with the line *(This is sample content. Replace it with
+your own from the dashboard.)*. They are samples, put there so the site could be
+seen with something on it: four events, four news posts and four health posts.
+The sample news sits below anything you publish, so your own posts always come
+first. Edit a sample to make it yours (and delete that last line), or delete
+it. Whoever maintains the code can also remove all of them in one go (the README
+explains how); a sample whose last line you have deleted is yours, and stays.
 
 **"It says a field 'must be at least … characters'."**
 The message names the field. Titles need at least 3 characters and article text

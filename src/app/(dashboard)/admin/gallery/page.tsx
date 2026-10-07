@@ -2,6 +2,7 @@
 
 import { CollectionManager } from "@/components/dashboard/collection-manager"
 import { api } from "@/lib/api"
+import { GALLERY_ADD_AT_ONCE, GALLERY_CATEGORIES } from "@/lib/gallery"
 import type { GalleryItem } from "@/types"
 
 export default function AdminGalleryPage() {
@@ -11,14 +12,22 @@ export default function AdminGalleryPage() {
       description="Photos and videos on the Gallery page. The newest are shown first."
       noun="photo"
       resource={api.gallery}
-      media={{ label: "Photo or video", allowVideo: true, required: true }}
+      media={{
+        label: "Photo or video",
+        allowVideo: true,
+        required: true,
+        addUpTo: GALLERY_ADD_AT_ONCE,
+        hint: `Add from 1 to ${GALLERY_ADD_AT_ONCE} at a time. Each becomes its own item in the gallery.`,
+      }}
       mediaOf={(item) => ({ publicId: item.publicId, type: item.type, width: item.width, height: item.height })}
       fields={[
         { name: "caption", label: "Caption", placeholder: "e.g. Harvest Thanksgiving", hint: "Optional" },
         {
           name: "category",
           label: "Category",
-          placeholder: "e.g. Services, Outreach, Youth",
+          kind: "select",
+          options: GALLERY_CATEGORIES,
+          placeholder: "No category",
           hint: "Optional. Visitors can filter the gallery by category.",
         },
       ]}

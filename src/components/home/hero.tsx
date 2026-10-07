@@ -12,6 +12,7 @@ import {
   heroVideoStill,
   type PictureSources,
 } from "@/lib/hero-media"
+import type { HeroSettings } from "@/lib/site-settings"
 import { cn } from "@/lib/utils"
 import type { HeroSlide } from "@/types"
 
@@ -31,8 +32,9 @@ import type { HeroSlide } from "@/types"
 /** How long a photo stays up. A video stays up until it has played through. */
 const PHOTO_SECONDS = 6
 
-// What the banner says when a slide has no headline of its own, or there are no slides
-const WELCOME = {
+// What the banner says when a slide has no headline of its own, or there are no
+// slides, unless the admin has written their own words for it
+const STANDARD_WELCOME = {
   title: "Welcome to NAC UCC",
   subtitle: "New Apostolic Church — University of Cape Coast Campus Congregation",
   buttons: [
@@ -41,14 +43,27 @@ const WELCOME = {
   ],
 }
 
+/** The standard welcome, with whichever parts the admin has replaced. */
+function welcomeText({ title, subtitle, ctaLabel, ctaHref }: HeroSettings) {
+  const [first, second] = STANDARD_WELCOME.buttons
+  return {
+    title: title || STANDARD_WELCOME.title,
+    subtitle: subtitle || STANDARD_WELCOME.subtitle,
+    // A button needs both its text and its link
+    buttons: [ctaLabel && ctaHref ? { label: ctaLabel, href: ctaHref } : first, second],
+  }
+}
+
 interface HeroProps {
   /** In the order the admin has put them. May be empty. */
   slides: HeroSlide[]
-  /** Cloudinary ID of the fallback picture, or "" if the admin has not set one */
-  fallbackImage: string
+  /** The fallback picture (its Cloudinary ID, or "" for none) and the banner's own words */
+  fallback: HeroSettings
 }
 
-export function Hero({ slides, fallbackImage }: HeroProps) {
+export function Hero({ slides, fallback }: HeroProps) {
+  const fallbackImage = fallback.fallbackImage
+  const welcome = welcomeText(fallback)
   const section = useRef<HTMLElement>(null)
   const touchStartX = useRef<number | null>(null)
   const [current, setCurrent] = useState(0)
@@ -84,7 +99,7 @@ export function Hero({ slides, fallbackImage }: HeroProps) {
           ? [{ label: slide.ctaLabel, href: slide.ctaHref }, { label: "Learn More", href: "/about" }]
           : [],
       }
-    : { ...WELCOME, subtitle: slide?.subtitle || WELCOME.subtitle }
+    : { ...welcome, subtitle: slide?.subtitle || welcome.subtitle }
 
   return (
     <section
@@ -166,7 +181,7 @@ export function Hero({ slides, fallbackImage }: HeroProps) {
           <div className="flex flex-wrap gap-3">
             {text.buttons.map(({ label, href }, index) => (
               <Link
-                key={label}
+                key={`${label} ${href}`}
                 href={href}
                 className={cn(
                   "inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 rounded-full text-white font-semibold text-sm transition-colors",

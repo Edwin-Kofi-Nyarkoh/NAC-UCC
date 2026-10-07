@@ -11,6 +11,8 @@ const optionalUrl = text.url("must be a full link, starting with https://").or(z
 const optionalWebsite = text
   .regex(/^https?:\/\/\S+$/i, "must be a full link, starting with https://")
   .or(z.literal(""))
+// A link to a page on this site, such as /events
+const optionalPage = text.regex(/^\/(?!\/)/, "must be a page on this site, e.g. /events").or(z.literal(""))
 
 export const bankSchema = z
   .object({ bankName: text, accountName: text, accountNo: text, branch: text })
@@ -52,6 +54,9 @@ export const serviceTimesSchema = z
 
 export const aboutSchema = z.object({
   history: text,
+  // The long account of how the congregation began. Written → it gets its own
+  // page (/about/our-story), reached from a button at the foot of the About page.
+  story: text.default(""),
   vision: text,
   mission: text,
   timeline: z
@@ -73,6 +78,13 @@ export const aboutSchema = z.object({
 export const heroSchema = z.object({
   // Cloudinary ID of the picture shown while a slide is loading, or "" for none
   fallbackImage: text,
+  // The banner's own words: shown over the fallback picture, and over any slide
+  // without a headline. Each one left blank keeps the standard wording. They all
+  // have a default, so a banner saved before they existed still loads.
+  title: text.max(120, "must be 120 characters or fewer").default(""),
+  subtitle: text.max(200, "must be 200 characters or fewer").default(""),
+  ctaLabel: text.max(40, "must be 40 characters or fewer").default(""),
+  ctaHref: optionalPage.default(""),
 })
 
 export const settingsSchemas = {
@@ -109,8 +121,8 @@ export const emptySettings: SiteSettings = {
   contact: { address: "", phone: "", email: "", officeHours: "", mapLatitude: null, mapLongitude: null },
   social: { facebook: "", youtube: "", instagram: "", twitter: "" },
   serviceTimes: [],
-  about: { history: "", vision: "", mission: "", timeline: [], churchWebsite: "", churchWebsiteButton: "" },
-  hero: { fallbackImage: "" },
+  about: { history: "", story: "", vision: "", mission: "", timeline: [], churchWebsite: "", churchWebsiteButton: "" },
+  hero: { fallbackImage: "", title: "", subtitle: "", ctaLabel: "", ctaHref: "" },
 }
 
 export function isSettingsSection(value: string): value is SettingsSection {

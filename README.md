@@ -35,6 +35,8 @@ Other commands:
 | `npm run db:push` | Apply `prisma/schema.prisma` to the database |
 | `npm run db:studio` | Browse the database in a browser |
 | `npm run create-admin -- <email> "<password>" "<name>"` | Create an admin, or reset an admin's password |
+| `npm run db:seed` | Add sample events, news posts and health posts (four of each), so the site can be seen with something on it. Safe to run twice: a sample already there is left alone, even if it has been edited |
+| `npm run db:seed -- --remove` | Take those samples out again. Nothing else is touched |
 
 ### First-time setup
 
@@ -118,20 +120,30 @@ in [STAFF-GUIDE.md](STAFF-GUIDE.md).
 Nothing on the public site is hard-coded sample data. Staff enter it in the dashboard,
 and a section of the site stays hidden until it has content.
 
+The one exception is `scripts/seed.ts` (`npm run db:seed`), which puts sample events,
+news and health posts into the database on request. They are ordinary records: staff can
+edit or delete them in the dashboard like any other. Each says in its last line that it
+is a sample, and the script finds them again by their addresses (all starting `sample-`),
+so removing them never touches anything staff wrote; a sample that staff have rewritten,
+taking that last line out, counts as theirs and is kept too. Sample posts are dated before the
+oldest post staff have written, so they sit below real news and never push it off the home
+page. The database is shared with the live site, so samples added from a local copy appear
+there too, within five minutes.
+
 | Shown on the site | Managed at | Who |
 |---|---|---|
 | News, events, sermons | `/admin/…` or `/editor/…` | Admin, Church Editor |
 | Health news and alerts | `/admin/medical` or `/medical/posts` | Admin, Medical Minister |
-| Home page banner (fallback picture, photo and video slides), leaders, ministries, gallery | `/admin/hero-slides`, `/admin/leaders`, `/admin/ministries`, `/admin/gallery` | Admin |
-| Service times, contact details, social links, About page text and its link to the wider church's website, bank details | `/admin/settings` | Admin |
+| Home page banner (fallback picture, its words, photo and video slides), leaders, ministries, gallery | `/admin/hero-slides`, `/admin/leaders`, `/admin/ministries`, `/admin/gallery` | Admin |
+| Service times, contact details, social links, About page text, the full story (its own page, `/about/our-story`), the link to the wider church's website, bank details | `/admin/settings` | Admin |
 | Sermon comments, contact messages, nominations | `/admin/comments`, `/admin/messages`, `/admin/nominations` | Admin |
 | Staff accounts | `/admin/users` | Admin |
 
 Where pictures appear on the home page:
 
-- The banner at the top, set up at `/admin/hero-slides`: a fallback picture, and
-  photo or video slides in the order the admin chooses. See "The home page banner"
-  below.
+- The banner at the top, set up at `/admin/hero-slides`: a fallback picture, the
+  banner's own words, and photo or video slides in the order the admin chooses. See
+  "The home page banner" below.
 - The newest news post is shown with its featured photo.
 - The newest sermon is shown over its photo.
 
@@ -148,6 +160,7 @@ README.md                   This file
 STAFF-GUIDE.md              How to use the dashboard, for non-developers
 prisma/schema.prisma        The database tables
 scripts/create-admin.ts     Creates the first admin account
+scripts/seed.ts             Adds or removes the sample events, news and health posts
 public/
   icons/                    The app icon (both logos) in the sizes phones and browsers ask for
   sw.js                     The service worker: keeps unchanging files, shows the offline page
@@ -178,6 +191,7 @@ src/
     server-api.ts           How public pages read their content (cached)
     session.ts              The signed-in user: storage, cookie, React hook
     site-settings.ts        The shape of the site settings, shared by API and forms
+    gallery.ts              The gallery's categories, and how many items can be added in one go
     cloudinary.ts           Builds image and video URLs
     hero-media.ts           Sizes and quality of the home page banner's photos and videos
     upload.ts               Uploads a file to Cloudinary from the browser
@@ -226,6 +240,12 @@ always something to look at:
 2. the admin's fallback picture, as a small softened file (about 10 KB);
 3. the current slide's photo, or the first frame of its video;
 4. the video itself, once enough has arrived to play.
+
+The words over it come from three places, most specific first: a slide's own headline,
+line and button; then the banner's words, which the admin types beside the fallback
+picture (they are part of the `hero` site setting); then the standard welcome written in
+`hero.tsx`. Each blank falls through to the next, so a slide that is only a background
+shows the banner's words, and a banner nobody has set up still greets visitors.
 
 It is the heaviest thing on the site, so it is built to use little data. The rules
 live in `src/lib/hero-media.ts`:
@@ -341,8 +361,18 @@ part-way, and gives up on any single query after 20 seconds instead of hanging.
   `src/server/routes/` (mount it in `src/server/app.ts`), a type, an entry in
   `src/lib/api.ts`, and a dashboard page. For a simple list, the dashboard page is a
   few lines using `CollectionManager` — see `src/app/(dashboard)/admin/leaders/page.tsx`.
+  A field can be a drop-down (`kind: "select"` with `options`), and `media.addUpTo`
+  lets several photos or videos be added in one go, each becoming its own record; the
+  gallery (`src/app/(dashboard)/admin/gallery/page.tsx`) uses both.
+- **A new gallery category:** add it to `GALLERY_CATEGORIES` in `src/lib/gallery.ts`.
+  The dashboard's list and the API's check both read it. Removing one that items
+  already use leaves those items as they are, but they cannot be saved again until a
+  category still on the list is chosen.
 - **A new site setting:** add it to `src/lib/site-settings.ts` and to the card in
-  `src/app/(dashboard)/admin/settings/page.tsx`. No database change is needed.
+  `src/app/(dashboard)/admin/settings/page.tsx`. No database change is needed. A field
+  added to a section that already exists must have a `.default(…)`: a saved section
+  that no longer fits its schema is treated as empty, so a required new field would
+  make everything already saved there disappear from the site.
 - **A new public page:** read its content with `serverFetch()`. It is then kept and
   refreshed like every other page, with nothing more to do. A page for a single record
   (`[slug]`) also exports `generateStaticParams` returning `[]`, as the existing ones do.

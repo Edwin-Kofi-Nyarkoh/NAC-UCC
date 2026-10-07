@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Menu, X, Sun, Moon, ChevronDown, Search } from "lucide-react"
 import { Logo } from "@/components/layout/logo"
 import { IntentLink } from "@/components/layout/intent-link"
@@ -19,8 +19,9 @@ export function Navbar({ ministries }: NavbarProps) {
   const { theme, setTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
-  const dropdownRef = useRef<HTMLElement>(null)
+  // Which dropdown is open, and on which page it was opened: it does not follow the visitor to the next page
+  const [opened, setOpened] = useState<{ label: string; pathname: string } | null>(null)
+  const openDropdown = opened?.pathname === pathname ? opened.label : null
 
   const items: NavItem[] = mainNav.map((item) =>
     item.href === "/ministries" && ministries.length > 0
@@ -41,16 +42,25 @@ export function Navbar({ ministries }: NavbarProps) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Close an open dropdown when clicking anywhere else
+  // An open dropdown closes when the visitor clicks or tabs to anything outside
+  // it (another menu link included), or presses Escape
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpenDropdown(null)
-      }
+    if (!openDropdown) return
+    const closeIfOutside = (e: Event) => {
+      if (!(e.target as Element).closest?.("[data-nav-dropdown]")) setOpened(null)
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+    const closeOnEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpened(null)
+    }
+    document.addEventListener("mousedown", closeIfOutside)
+    document.addEventListener("focusin", closeIfOutside)
+    document.addEventListener("keydown", closeOnEscape)
+    return () => {
+      document.removeEventListener("mousedown", closeIfOutside)
+      document.removeEventListener("focusin", closeIfOutside)
+      document.removeEventListener("keydown", closeOnEscape)
+    }
+  }, [openDropdown])
 
   // The page behind the mobile menu should not scroll
   useEffect(() => {
@@ -99,12 +109,12 @@ export function Navbar({ ministries }: NavbarProps) {
             </IntentLink>
 
             {/* Desktop navigation */}
-            <nav className="hidden lg:flex items-center gap-1" ref={dropdownRef}>
+            <nav className="hidden lg:flex items-center gap-1">
               {items.map((item) =>
                 item.children ? (
-                  <div key={item.href} className="relative">
+                  <div key={item.href} className="relative" data-nav-dropdown>
                     <button
-                      onClick={() => setOpenDropdown(openDropdown === item.label ? null : item.label)}
+                      onClick={() => setOpened(openDropdown === item.label ? null : { label: item.label, pathname })}
                       aria-expanded={openDropdown === item.label}
                       className={cn("flex items-center gap-1", linkClass(pathname.startsWith(item.href)))}
                     >
@@ -122,7 +132,7 @@ export function Navbar({ ministries }: NavbarProps) {
                           <IntentLink
                             key={child.href}
                             href={child.href}
-                            onClick={() => setOpenDropdown(null)}
+                            onClick={() => setOpened(null)}
                             className="block px-4 py-2 text-sm text-popover-foreground hover:bg-muted hover:text-foreground transition-colors"
                           >
                             {child.label}
